@@ -56,4 +56,4 @@ app.use(cors({
     cb(new Error('Not allowed by CORS'));
   },
   credentials: true
-}));
+}));tials: true
