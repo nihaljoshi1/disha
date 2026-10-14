@@ -8,14 +8,23 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // No token = no point asking the server
+    if (!localStorage.getItem('token')) {
+      setLoading(false);
+      return;
+    }
     api.get('/auth/me')
       .then(res => setUser(res.data.user))
-      .catch(() => setUser(null))
+      .catch(() => {
+        localStorage.removeItem('token');
+        setUser(null);
+      })
       .finally(() => setLoading(false));
   }, []);
 
   const login = async (email, password) => {
     const res = await api.post('/auth/login', { email, password });
+    if (res.data.token) localStorage.setItem('token', res.data.token);
     setUser(res.data.user);
   };
 
@@ -24,8 +33,12 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
-    await api.post('/auth/logout');
-    setUser(null);
+    try {
+      await api.post('/auth/logout');
+    } finally {
+      localStorage.removeItem('token');   // clear even if the request fails
+      setUser(null);
+    }
   };
 
   return (
