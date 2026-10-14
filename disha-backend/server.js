@@ -23,8 +23,9 @@ const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
 
 app.use(cors({
   origin: (origin, cb) => {
-    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-    cb(new Error('Not allowed by CORS'));
+     if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+     console.error('CORS rejected origin:', origin, 'allowed:', allowedOrigins);
+     cb(null, false);   // reject without throwing, so it doesn't become a 500
   },
   credentials: true
 }));tials: true
