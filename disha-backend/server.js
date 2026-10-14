@@ -1,13 +1,12 @@
-process.on('uncaughtException', (e) => { console.error('UNCAUGHT:', e); process.exit(1); });
-process.on('unhandledRejection', (e) => { console.error('UNHANDLED:', e); process.exit(1); });
-console.log('boot: node', process.version, 'PORT', process.env.PORT);
 require('dotenv').config();
+
 const required = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'JWT_SECRET', 'FRONTEND_URL'];
 const missing = required.filter(k => !process.env[k]);
 if (missing.length) {
   console.error('Missing env vars:', missing.join(', '));
   process.exit(1);
 }
+
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
@@ -15,12 +14,21 @@ const supabase = require('./config/supabaseClient');
 
 const app = express();
 
-// IMPORTANT: origin must match exactly where your frontend is served from.
-// Check your Live Server / VS Code extension port and update this if it's not 5500.
+const isProd = process.env.NODE_ENV === 'production';
+if (isProd) app.set('trust proxy', 1); // Render sits behind a proxy; needed for secure cookies
+
+const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
+  .split(',')
+  .map(s => s.trim());
+
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: (origin, cb) => {
+    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+    cb(new Error('Not allowed by CORS'));
+  },
   credentials: true
-}));
+}));tials: true
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -46,20 +54,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong on the server' });
 });
 
-const isProd = process.env.NODE_ENV === 'production';
-if (isProd) app.set('trust proxy', 1); // Render sits behind a proxy; needed for secure cookies
 
-const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
-  .split(',')
-  .map(s => s.trim());
-
-app.use(cors({
-  origin: (origin, cb) => {
-    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-    cb(new Error('Not allowed by CORS'));
-  },
-  credentials: true
-}));tials: true
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
