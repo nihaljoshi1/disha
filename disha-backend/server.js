@@ -1,3 +1,6 @@
+process.on('uncaughtException', (e) => { console.error('UNCAUGHT:', e); process.exit(1); });
+process.on('unhandledRejection', (e) => { console.error('UNHANDLED:', e); process.exit(1); });
+console.log('boot: node', process.version, 'PORT', process.env.PORT);
 require('dotenv').config();
 const required = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'JWT_SECRET', 'FRONTEND_URL'];
 const missing = required.filter(k => !process.env[k]);
